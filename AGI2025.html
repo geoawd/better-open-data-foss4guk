@@ -4,7 +4,7 @@
 	<head>
 		<meta charset="utf-8">
 
-		<title>Improving Interoperability with Cloud-native Geospatial Formats </title>
+		<title>Improving Interoperability with Cloud-native Geospatial Formats</title>
 
 		<meta name="description" content="Improving Interoperability with Cloud-native Geospatial Formats">
 		<meta name="author" content="Alex Donald (Geological Survey of Northern Ireland)">
@@ -35,7 +35,7 @@
 					</p>
 				</section>
 
-								<section>
+				<section>
 					<h3>But first...</h3>
 						<p class="fragment">These formats were not around when these data were acquired</p>
 						<p class="fragment">The source data is unsupported</p>
@@ -51,10 +51,10 @@
 						OGC Standards are internationally recognized specifications that let different systems exchange information seamlessly.
 					</p>
 					</section>
-				<section data-background-iframe="https://www.ogc.org/standards/" data-background-interactive data-background-color="#FFFFFF">
-				</section>
+					<section data-background-iframe="https://www.ogc.org/standards/" data-background-interactive data-background-color="#FFFFFF">
+					</section>
 
-						<section>
+					<section>
 						<h2>Interoperability</h2>
 						<p>Enables seamless data exchange between different systems, platforms, and organizations, reducing integration costs and complexity.</p>
 					</section>
@@ -220,6 +220,8 @@ for f in os.listdir(input_dir):
 							<li>JPEG: Lossy compression suitable for RGB imagery, significantly reducing file size but not ideal for analytical data.</li>
 							<li>WEBP: WebP is a modern image format developed by Google that offers both lossy and lossless compression, designed for faster loading and smaller file sizes on the web compared to older formats like JPEG and PNG</li>
 							</ul>
+							<p>DEFLATE, LZW or ZSTD are a good option for data where the pixel values matter.</p>
+							<p>WEBP is good for aerial imagery where small compression artifacts aren't too important.</p>
 						</aside>
 						
 					</section>
@@ -357,7 +359,6 @@ for f in os.listdir(input_dir):
 				 <section>
 					<section>
 						<h2>Not just geospatial data...</h2>
-						<small>This is where it gets back to the day job...</small>
 					</section>	
 
 					<section>
@@ -398,6 +399,7 @@ for f in os.listdir(input_dir):
 						<small><a href="https://cogeo.org">cogeo.org</a></small><br />
 						<small><a href="https://gdal.org/en/stable/drivers/raster/cog.html">GDAL - COG Driver</a></small><br />
 						<small><a href="https://rasterio.readthedocs.io/en/stable/quickstart.html">Rasterio</a></small><br />
+						<small><a href="https://www.lutraconsulting.co.uk/blogs/stac-in-qgis/">STAC in QGIS</a></small><br />
 					</section>	
 				
 				</section>
