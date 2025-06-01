@@ -48,7 +48,7 @@
 					<section>
 					<h2>Why Standards?</h2>
 					<p>
-						OGC Standards are internationally recognised specifications that let different systems exchange information seamlessly.
+						 Open Geospatial Consortium (OGC) standards are internationally recognised specifications that let different systems exchange information seamlessly.
 					</p>
 					</section>
 					<section data-background-iframe="https://www.ogc.org/standards/" data-background-interactive data-background-color="#FFFFFF">
@@ -56,23 +56,23 @@
 
 					<section>
 						<h2>Interoperability</h2>
-						<p>Enables seamless data exchange between different systems, platforms, and organizations, reducing integration costs and complexity.</p>
+						<p>Enable seamless data exchange between different systems, platforms, and organisations, reducing integration costs and complexity.</p>
 					</section>
 					<section>
 						<h2>Data Consistency and Quality</h2>
-						<p>Promotes uniform data formats, definitions, and structures, leading to higher data reliability and easier validation.</p>
+						<p>Promote uniform data formats, definitions, and structures, leading to higher data reliability and easier validation.</p>
 					</section>
 					<section>
 						<h2>Efficiency and Cost Savings</h2>
-						<p>Reduces duplication of effort in data collection, processing, and analysis by allowing reuse of tools and datasets.</p>
+						<p>Reduce duplication of effort in data collection, processing, and analysis by allowing reuse of tools and datasets.</p>
 					</section>
 					<section>
-						<h2>Scalability and Future-Proofing:</h2>
-						<p>Supports scalable solutions that can grow and adapt with evolving technologies and datasets.</p>
+						<h2>Scalability and Future-Proofing</h2>
+						<p>Support scalable solutions that can grow and adapt with evolving technologies and datasets.</p>
 					</section>
 					<section>
 						<h2>Compliance and Collaboration</h2>
-						<p>Facilitates compliance with national/international regulations and fosters collaboration across sectors and borders.</p>
+						<p>Facilitate compliance with national/international regulations and foster collaboration across sectors and borders.</p>
 					</section>
 					<section>
 						<h2>Avoid Vendor Lock-in</h2>
@@ -87,6 +87,14 @@
 					</section>
 
 					<section data-background-iframe="https://www.ogc.org/announcement/cloud-optimized-geotiff-cog-published-as-official-ogc-standard/#:~:text=The%20Open%20Geospatial%20Consortium%20(OGC,as%20an%20official%20OGC%20Standard." data-background-interactive data-background-color="#FFFFFF">
+					
+					<aside class="notes">
+						<p>Tiled Structure: Data divided into regular tiles (typically 512x512 pixels)</p>
+						<p>Internal Overviews: Pre-computed lower resolution versions</p>
+						<p>HTTP Range Support: Optimized for cloud storage</p>
+						<p>Sparse Files: Only download needed tiles</p>
+						<p>Compression: DEFLATE, LZW, JPEG, or other algorithms</p>				
+					</aside>
 					</section>
 
 					<section>
@@ -125,18 +133,21 @@
 				<section>
 					<section>
 						<h2>How do COGs work?</h2>
-						<p>File Structure + Storage technologies = :-)</p>
+						<p>File Structure + http technologies</p>
 						</section>
 					<section>
+						<h2>File Structure</h2>
 						<p>
 							COG's are a specific type of GeoTIFF, optimised for cloud storage and access.
 						</p>
 						
 					</section>
 					<section>
+						<h2>HTTP Range Requests</h2>
 						<p>
 							HTTP Range Requests allow clients to request specific parts of a file, enabling efficient data retrieval without downloading the entire file.
 						</p>
+						
 					</section>
 					<section>
 						<p>
@@ -203,12 +214,23 @@ for f in os.listdir(input_dir):
 					</section>
 				</section>
 
+				<!-- Bands-->
+				<section>
+					<section>
+						<h2>Bands</h2>
+						<p>While today's demo is focussed on LiDAR data COGs support multiple bands.</p>
+						<p>There's plenty of optical data from Planet so I'm not going to go into detail on that.</p>
+						</section>
+				</section>
+
+
 				<!-- Compression / storage space-->
 				<section>
 					<section>
 						<h2>COG Compression</h2>
-						<p>TLDR: compression can make the data 1/3 of the size with no loss of resolution.</p>
-						<small>View the speaker notes for details.</small>
+						<p>Lossy and lossless compression options available</p>
+						<p>TLDR: compression, in the case of these LiDAR data, can make the data 1/3 of the size with no loss of resolution.</p>
+						<small>View the speaker notes for details of methods and their suitability.</small>
 
 
 						<aside class="notes">
@@ -226,7 +248,7 @@ for f in os.listdir(input_dir):
 						
 					</section>
 
-					<section data-background="agi_media/dsm_file_sizes.png">
+					<section data-background="dsm_file_sizes.png">
 
 					</section>
 					</section>
@@ -242,13 +264,13 @@ for f in os.listdir(input_dir):
 					</section>
 					
 					<section>
-						<ol>
-							<li>OpenData NI for LiDAR URLs</li>
-							<li>Python - <a href="https://github.com/geoawd/QGIS-python-scripts/blob/main/DownloadProcessCOGS.py">custom COG Converter</a></li>
-							<li><a href="https://github.com/geoawd/QGIS-python-scripts/blob/main/AnalyseCOG.py">Analyse</a> (<a href="https://github.com/geoawd/QGIS-python-scripts/blob/main/lidar-analysis.txt">results</a>) and standardise the units with gdal_calc.py</li>
-							<li>Build an Open Layers web map</li>
-							<li>Create a STAC</li>
-						</ol>
+						<ul>
+							<li class="fragment">Source Lidar data (OpenData NI)</li>
+							<li class="fragment">Process data (Python) - <a href="https://github.com/geoawd/QGIS-python-scripts/blob/main/DownloadProcessCOGS.py">custom COG Converter</a></li>
+							<li class="fragment"><a href="https://github.com/geoawd/QGIS-python-scripts/blob/main/AnalyseCOG.py">Analyse</a> (<a href="https://github.com/geoawd/QGIS-python-scripts/blob/main/lidar-analysis.txt">results</a>) and standardise the units with gdal_calc.py</li>
+							<li class="fragment">Display data - Build an Open Layers web map</li>
+							<li class="fragment">Create a STAC</li>
+						</ul>
 
 					</section>
 					<section>
@@ -300,12 +322,14 @@ for f in os.listdir(input_dir):
 					<section data-background-video="https://better-open-data.com/agi2025/AGI-demo6.mov">
 					</section>		
 				
+					<section data-background-video="https://better-open-data.com/agi2025/AGI-demo7.mov">
+					</section>	
 				</section>
 
 				<!-- Where do I store the data-->
 				 <section>
 					<section>
-						<h2>Where's the data now...</h2>
+						<h2>Where's the data...</h2>
 						<ul>
 							<li>Raspberry Pi (self hosted as <a href="https://better-open-data.com">better-open-data.com</a>)</li>
 							<small> Storage and bandwidth is not an issue!</small>
