@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoTIFF Compression Analysis</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+        
+        .header {
+            color: black;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            padding: 40px;
+            background: #f8f9fa;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+        
+        .stat-card h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+        }
+        
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .lzw { color: #e74c3c; }
+        .deflate { color: #f39c12; }
+        .zstd { color: #27ae60; }
+        
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .charts-section {
+            padding: 40px;
+        }
+        
+        .chart-container {
+            margin-bottom: 50px;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        .chart-title {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .canvas-container {
+            position: relative;
+            height: 400px;
+            margin-bottom: 20px;
+        }
+        
+        .examples-section {
+            background: #ecf0f1;
+            padding: 40px;
+        }
+        
+        .examples-title {
+            font-size: 2rem;
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+        }
+        
+        .example-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .example-card h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        
+        .example-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        .example-item:last-child {
+            border-bottom: none;
+        }
+        
+        .filename {
+            font-weight: 500;
+            color: #2c3e50;
+            flex: 1;
+            margin-right: 15px;
+        }
+        
+        .compression-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .size {
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 20px;
+            color: white;
+            font-size: 0.9rem;
+        }
+        
+        .savings {
+            color: #27ae60;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>GeoTIFF Compression Analysis</h1>
+            <p>Comparison of LZW, DEFLATE, and ZSTD compression algorithms</p>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Directory Sizes</h3>
+                <div class="stat-value lzw">LZW:74.19 GB</div>
+                <div class="stat-label">.</div>
+                <div class="stat-value deflate">DEFLATE: 57.28 GB</div>
+                <div class="stat-label">.</div>
+                <div class="stat-value zstd">ZSTD: 43.40 GB</div>
+                <div class="stat-label">.</div>
+            </div>
+            
+
+            
+            <div class="stat-card">
+                <h3>Compression Savings vs LZW</h3>
+                <div class="stat-value deflate">22.8%</div>
+                <div class="stat-label">DEFLATE vs LZW</div>
+                <div class="stat-value zstd">41.5%</div>
+                <div class="stat-label">ZSTD vs LZW</div>
+                <div class="stat-value zstd">24.2%</div>
+                <div class="stat-label">ZSTD vs DEFLATE</div>
+            </div>
+        </div>
+        
+        <div class="charts-section">
+            <div class="chart-container">
+                <h3 class="chart-title">File Size Distribution Comparison</h3>
+                <div class="canvas-container">
+                    <canvas id="distributionChart"></canvas>
+                </div>
+            </div>
+            
+            
+        </div>
+        
+        <div class="examples-section">
+            <h2 class="examples-title">Compression Examples</h2>
+            <div class="examples-grid">
+
+                <div class="example-card">
+                    <h4>🏆 Largest Space Savings (ZSTD vs LZW)</h4>
+                    <div id="largestSavings"></div>
+                </div>
+                
+
+                
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data processing
+        const deflateData = [
+['Ardquin_DSM.tif', 829.96],
+['Ardquin_DTM.tif', 810.09],
+['Ardstraw_02_02_2012_DSM.tif', 19.67],
+['Ardstraw_02_02_2012_DTM.tif', 19.53],
+['Ardtole_DSM.tif', 41.81],
+['Ardtole_DTM.tif', 40.56],
+['Armagh-Dungannon-Coalisland_15_03_2010_DTM.tif', 409.54],
+['Ballinamallard_05_03_2012_DSM.tif', 44.36],
+['Ballinamallard_05_03_2012_DTM.tif', 42.68],
+['Ballycastle_15_03_2010_DTM.tif', 20.07],
+['Ballyclare_23_04_2009_DTM.tif', 160.06],
+['Ballygalley_15_03_2010_DTM.tif', 4.77],
+['Ballygowan_15_03_2010_DTM.tif', 21.40],
+['Ballymena_23_04_2009_DSM.tif', 171.35],
+['Ballymena_23_04_2009_DTM.tif', 157.14],
+['Ballynahinch_15_03_2010_DTM.tif', 70.29],
+['Ballynavally_04_04_2007_DTM.tif', 5.31],
+['Banbridge_15_03_2010_DTM.tif', 57.21],
+['Bangor_04_04_2007_DTM.tif', 197.68],
+['Bangor_Extension_05_03_2012_DSM.tif', 96.55],
+['Bangor_Extension_05_03_2012_DTM.tif', 89.62],
+['Belfast_2006_DSM.tif', 1042.77],
+['Belfast_2006_DTM.tif', 744.98],
+['Belleek_05_03_2012_DSM.tif', 28.68],
+['Belleek_05_03_2012_DTM.tif', 27.37],
+['Beragh_02_02_2012_DSM.tif', 44.44],
+['Beragh_02_02_2012_DTM.tif', 43.52],
+['Black_Pigs_Dyke_DSM.tif', 121.49],
+['Black_Pigs_Dyke_DTM.tif', 111.95],
+['Blackwater_16_06_2014_DSM.tif', 470.44],
+['Blackwater_16_06_2014_DTM.tif', 458.32],
+['Bonamargy_DSM.tif', 14.26],
+['Bonamargy_DTM.tif', 12.88],
+['Burren_03_03_2012_DSM.tif', 15.31],
+['Burren_03_03_2012_DTM.tif', 14.83],
+['Bushmills_15_03_2010_DTM.tif', 19.51],
+['Cahery_DSM.tif', 53.52],
+['Cahery_DTM.tif', 51.85],
+['Camowen_16_06_2014_DSM.tif', 19.32],
+['Camowen_16_06_2014_DTM.tif', 18.96],
+['Carrickfergus_04_04_2007_DTM.tif', 200.40],
+['Carryduff_15_03_2010_DTM.tif', 25.67],
+['Castlederg_23_05_2004_DSM.tif', 19.45],
+['Castlederg_23_05_2004_DTM.tif', 18.78],
+['Castlereagh_04_04_2007_DTM.tif', 9.68],
+['Cave_Hill_DSM.tif', 506.41],
+['Cave_Hill_DTM.tif', 490.85],
+['Charlemont_DSM.tif', 44.85],
+['Charlemont_DTM.tif', 42.03],
+['Clady_10_03_2009_DSM.tif', 13.34],
+['Clady_10_03_2009_DTM.tif', 12.67],
+['Clandeboye_DSM.tif', 201.49],
+['Clandeboye_DTM.tif', 187.45],
+['Clogher_DSM.tif', 336.47],
+['Clogher_DTM.tif', 331.50],
+['Cloghmills_16_06_2014_DSM.tif', 33.84],
+['Cloghmills_16_06_2014_DTM.tif', 33.13],
+['Coleraine-Portstewart-Portrush_15_03_2010_DTM.tif', 279.81],
+['Cookstown_06_06_2013_DSM.tif', 75.48],
+['Cookstown_06_06_2013_DTM.tif', 69.55],
+['Cornashee_DSM.tif', 193.63],
+['Cornashee_DTM.tif', 180.92],
+['Crossmurrin_DSM.tif', 391.67],
+['Crossmurrin_DTM.tif', 379.10],
+['Cullybackey_15_03_2010_DTM.tif', 51.62],
+['Cushendall_15_03_2010_DTM.tif', 15.28],
+['Devenish_DSM.tif', 152.90],
+['Devenish_DTM.tif', 105.48],
+['Dohertys_Tower_DSM.tif', 94.36],
+['Dohertys_Tower_DTM.tif', 90.39],
+['Donegore_DSM.tif', 806.13],
+['Donegore_DTM.tif', 781.54],
+['Dougary_02_02_2012_DSM.tif', 18.24],
+['Dougary_02_02_2012_DTM.tif', 17.78],
+['Downpatrick_05_05_2009_DSM.tif', 137.16],
+['Downpatrick_05_05_2009_DTM.tif', 130.41],
+['Dundrum_DSM.tif', 87.55],
+['Dundrum_DTM.tif', 86.29],
+['Dunluce_DSM.tif', 109.82],
+['Dunluce_DTM.tif', 97.87],
+['Dunmull_DSM.tif', 72.61],
+['Dunmull_DTM.tif', 71.41],
+['Dunmurry_04_04_2007_DTM.tif', 67.62],
+['Dunseverick_DSM.tif', 217.13],
+['Dunseverick_DTM.tif', 211.09],
+['East Belfast_29_05_2013_DSM.tif', 115.34],
+['East Belfast_29_05_2013_DTM.tif', 105.85],
+['Eglinton_11_12_2012_DSM.tif', 30.02],
+['Eglinton_11_12_2012_DTM.tif', 28.50],
+['Enniskillen_05_03_2012_DSM.tif', 114.67],
+['Enniskillen_05_03_2012_DTM.tif', 110.41],
+['Fintona_02_02_2012_DSM.tif', 46.06],
+['Fintona_02_02_2012_DTM.tif', 44.88],
+['Folk Park Newtownstewart_02_02_2012_DSM.tif', 45.81],
+['Folk Park Newtownstewart_02_02_2012_DTM.tif', 45.31],
+['Foyle_23_05_2004_DSM.tif', 149.45],
+['Foyle_23_05_2004_DTM.tif', 148.13],
+['Garron_DSM.tif', 315.89],
+['Garron_DTM.tif', 310.20],
+['Giants_Sconce_DSM.tif', 138.74],
+['Giants_Sconce_DTM.tif', 128.35],
+['Glenavy_02_02_2012_DSM.tif', 21.06],
+['Glenavy_02_02_2012_DTM.tif', 20.12],
+['Glynn_DSM.tif', 216.52],
+['Glynn_DTM.tif', 208.80],
+['Greyabbey_Ballywalter_DSM.tif', 467.15],
+['Greyabbey_Ballywalter_DTM.tif', 536.27],
+['Inch_Abbey_DSM.tif', 283.52],
+['Inch_Abbey_DTM.tif', 271.54],
+['Keady_02_02_2012_DSM.tif', 24.65],
+['Keady_02_02_2012_DTM.tif', 24.11],
+['Killyleagh__15_03_2010_DTM.tif', 12.51],
+['Kiltierney_DSM.tif', 453.11],
+['Kiltierney_DTM.tif', 415.32],
+['Larne_15_03_2010_DTM.tif', 12.50],
+['Limavady_23_05_2004_DSM.tif', 111.61],
+['Limavady_23_05_2004_DTM.tif', 107.38],
+['Linford_DSM.tif', 1473.69],
+['Linford_DTM.tif', 1398.37],
+['Lisbellaw_05_03_2012_DSM.tif', 20.11],
+['Lisbellaw_05_03_2012_DTM.tif', 19.66],
+['Lisburn_15_03_2010_DTM.tif', 355.72],
+['Londonderry_30_04_2009_DTM.tif', 235.80],
+['LoughNeagh_2017_DSM.tif', 697.32],
+['LoughNeagh_2017_DTM.tif', 407.43],
+['LowerBann_16_06_2014_DSM.tif', 248.80],
+['LowerBann_16_06_2014_DTM.tif', 238.41],
+['Lurgan_05_03_2012_DSM.tif', 254.35],
+['Lurgan_05_03_2012_DTM.tif', 238.49],
+['Lyles_Hill_DSM.tif', 288.86],
+['Lyles_Hill_DTM.tif', 277.55],
+['Maghera_20_04_2009_DSM.tif', 149.00],
+['Maghera_20_04_2009_DTM.tif', 136.75],
+['Magherafelt_15_03_2010_DTM.tif', 39.74],
+['Magheramore_DSM.tif', 14.69],
+['Magheramore_DTM.tif', 14.40],
+['Maguiresbridge_05_03_2012_DSM.tif', 23.51],
+['Maguiresbridge_05_03_2012_DTM.tif', 22.77],
+['Mobuoy_DSM.tif', 849.86],
+['Mobuoy_DTM.tif', 824.48],
+['Moneymore_05_03_2012_DSM.tif', 59.05],
+['Moneymore_05_03_2012_DTM.tif', 57.00],
+['Mossley_05_03_2012_DSM.tif', 91.69],
+['Mossley_05_03_2012_DTM.tif', 85.84],
+['Mount_Stewart_DSM.tif', 16.74],
+['Mount_Stewart_DTM.tif', 16.74],
+['Navan_DSM.tif', 1197.67],
+['Navan_DTM.tif', 1162.45],
+['Newcastle_15_03_2010_DTM.tif', 45.48],
+['Newry_15_03_2010_DTM.tif', 135.42],
+['Newtownabbey_15_03_2010_DTM.tif', 52.74],
+['Newtownards_10_06_2008_DSM.tif', 182.56],
+['Newtownards_10_06_2008_DTM.tif', 172.03],
+['Newtownstewart_23_05_2004_DSM.tif', 7.36],
+['Newtownstewart_23_05_2004_DTM.tif', 7.12],
+['Omagh_23_05_2004_DSM.tif', 34.23],
+['Omagh_23_05_2004_DTM.tif', 32.07],
+['Omagh_Town_11_12_2012_DSM.tif', 34.67],
+['Omagh_Town_11_12_2012_DTM.tif', 31.63],
+['PortadownExtension_02_02_2012_DSM.tif', 32.15],
+['PortadownExtension_02_02_2012_DTM.tif', 29.90],
+['Portadown_27_04_2009_DSM.tif', 75.51],
+['Portadown_27_04_2009_DTM.tif', 69.15],
+['Raholp_DSM.tif', 72.72],
+['Raholp_DTM.tif', 70.96],
+['Randalstown_15_03_2010_DTM.tif', 67.17],
+['Ringreagh_DSM.tif', 32.02],
+['Ringreagh_DTM.tif', 29.36],
+['Saintfield_02_02_2012_DSM.tif', 42.59],
+['Saintfield_02_02_2012_DTM.tif', 41.25],
+['Saul_DSM.tif', 176.67],
+['Saul_DTM.tif', 171.18],
+['Scrabo_DSM.tif', 146.88],
+['Scrabo_DTM.tif', 141.26],
+['Sion Mills_02_02_2012_DSM.tif', 44.15],
+['Sion Mills_02_02_2012_DTM.tif', 43.22],
+['Slemish_DSM.tif', 416.90],
+['Slemish_DTM.tif', 129.62],
+['Stonyford_16_06_2014_DSM.tif', 17.72],
+['Stonyford_16_06_2014_DTM.tif', 17.10],
+['Strabane_23_05_2004_DSM.tif', 27.68],
+['Strabane_23_05_2004_DTM.tif', 26.41],
+['Struell_DSM.tif', 97.22],
+['Struell_DTM.tif', 94.59],
+['Tandragee_15_03_2010_DTM.tif', 14.02],
+['The_Dorsey_DSM.tif', 392.01],
+['The_Dorsey_DTM.tif', 406.26],
+['Tirgoland_DSM.tif', 143.54],
+['Tirgoland_DTM.tif', 142.13],
+['Tullaghoge_DSM.tif', 156.32],
+['Tullaghoge_DTM.tif', 149.96]
+        ];
+
+        const lzwData = [
+['Ardquin_DSM.tif', 1086.08],
+['Ardquin_DTM.tif', 1074.77],
+['Ardstraw_02_02_2012_DSM.tif', 27.67],
+['Ardstraw_02_02_2012_DTM.tif', 27.83],
+['Ardtole_DSM.tif', 54.77],
+['Ardtole_DTM.tif', 54.23],
+['Armagh-Dungannon-Coalisland_15_03_2010_DTM.tif', 520.43],
+['Ballinamallard_05_03_2012_DSM.tif', 59.94],
+['Ballinamallard_05_03_2012_DTM.tif', 59.23],
+['Ballycastle_15_03_2010_DTM.tif', 26.27],
+['Ballyclare_23_04_2009_DTM.tif', 227.87],
+['Ballygalley_15_03_2010_DTM.tif', 6.04],
+['Ballygowan_15_03_2010_DTM.tif', 27.65],
+['Ballymena_23_04_2009_DSM.tif', 229.25],
+['Ballymena_23_04_2009_DTM.tif', 219.52],
+['Ballynahinch_15_03_2010_DTM.tif', 92.37],
+['Ballynavally_04_04_2007_DTM.tif', 7.68],
+['Banbridge_15_03_2010_DTM.tif', 75.99],
+['Bangor_04_04_2007_DTM.tif', 296.75],
+['Bangor_Extension_05_03_2012_DSM.tif', 104.51],
+['Bangor_Extension_05_03_2012_DTM.tif', 88.95],
+['Belfast_2006_DSM.tif', 1437.27],
+['Belfast_2006_DTM.tif', 1325.43],
+['Belleek_05_03_2012_DSM.tif', 39.50],
+['Belleek_05_03_2012_DTM.tif', 39.06],
+['Beragh_02_02_2012_DSM.tif', 60.08],
+['Beragh_02_02_2012_DTM.tif', 60.05],
+['Black_Pigs_Dyke_DSM.tif', 158.33],
+['Black_Pigs_Dyke_DTM.tif', 151.82],
+['Blackwater_16_06_2014_DSM.tif', 590.52],
+['Blackwater_16_06_2014_DTM.tif', 583.37],
+['Bonamargy_DSM.tif', 18.32],
+['Bonamargy_DTM.tif', 17.59],
+['Burren_03_03_2012_DSM.tif', 20.55],
+['Burren_03_03_2012_DTM.tif', 20.38],
+['Bushmills_15_03_2010_DTM.tif', 24.49],
+['Cahery_DSM.tif', 73.32],
+['Cahery_DTM.tif', 72.47],
+['Camowen_16_06_2014_DSM.tif', 25.30],
+['Camowen_16_06_2014_DTM.tif', 25.06],
+['Carrickfergus_04_04_2007_DTM.tif', 303.80],
+['Carryduff_15_03_2010_DTM.tif', 33.62],
+['Castlederg_23_05_2004_DSM.tif', 26.75],
+['Castlederg_23_05_2004_DTM.tif', 26.05],
+['Castlereagh_04_04_2007_DTM.tif', 14.20],
+['Cave_Hill_DSM.tif', 661.02],
+['Cave_Hill_DTM.tif', 652.90],
+['Charlemont_DSM.tif', 58.09],
+['Charlemont_DTM.tif', 56.55],
+['Clady_10_03_2009_DSM.tif', 18.40],
+['Clady_10_03_2009_DTM.tif', 18.08],
+['Clandeboye_DSM.tif', 259.20],
+['Clandeboye_DTM.tif', 250.82],
+['Clogher_DSM.tif', 447.10],
+['Clogher_DTM.tif', 460.97],
+['Cloghmills_16_06_2014_DSM.tif', 44.52],
+['Cloghmills_16_06_2014_DTM.tif', 44.03],
+['Coleraine-Portstewart-Portrush_15_03_2010_DTM.tif', 284.87],
+['Cookstown_06_06_2013_DSM.tif', 102.28],
+['Cookstown_06_06_2013_DTM.tif', 98.59],
+['Cornashee_DSM.tif', 259.50],
+['Cornashee_DTM.tif', 255.07],
+['Crossmurrin_DSM.tif', 515.31],
+['Crossmurrin_DTM.tif', 506.88],
+['Cullybackey_15_03_2010_DTM.tif', 67.79],
+['Cushendall_15_03_2010_DTM.tif', 19.33],
+['Devenish_DSM.tif', 205.18],
+['Devenish_DTM.tif', 147.79],
+['Dohertys_Tower_DSM.tif', 123.12],
+['Dohertys_Tower_DTM.tif', 121.09],
+['Donegore_DSM.tif', 1097.77],
+['Donegore_DTM.tif', 1080.65],
+['Dougary_02_02_2012_DSM.tif', 24.60],
+['Dougary_02_02_2012_DTM.tif', 24.49],
+['Downpatrick_05_05_2009_DSM.tif', 184.77],
+['Downpatrick_05_05_2009_DTM.tif', 180.84],
+['Dundrum_DSM.tif', 113.19],
+['Dundrum_DTM.tif', 112.62],
+['Dunluce_DSM.tif', 149.00],
+['Dunluce_DTM.tif', 136.77],
+['Dunmull_DSM.tif', 98.42],
+['Dunmull_DTM.tif', 97.81],
+['Dunmurry_04_04_2007_DTM.tif', 98.12],
+['Dunseverick_DSM.tif', 292.43],
+['Dunseverick_DTM.tif', 288.58],
+['East Belfast_29_05_2013_DSM.tif', 152.25],
+['East Belfast_29_05_2013_DTM.tif', 146.87],
+['Eglinton_11_12_2012_DSM.tif', 41.66],
+['Eglinton_11_12_2012_DTM.tif', 40.62],
+['Enniskillen_05_03_2012_DSM.tif', 155.06],
+['Enniskillen_05_03_2012_DTM.tif', 153.28],
+['Fintona_02_02_2012_DSM.tif', 62.33],
+['Fintona_02_02_2012_DTM.tif', 62.03],
+['Folk Park Newtownstewart_02_02_2012_DSM.tif', 62.70],
+['Folk Park Newtownstewart_02_02_2012_DTM.tif', 63.05],
+['Foyle_23_05_2004_DSM.tif', 202.29],
+['Foyle_23_05_2004_DTM.tif', 202.06],
+['Garron_DSM.tif', 412.51],
+['Garron_DTM.tif', 410.03],
+['Giants_Sconce_DSM.tif', 183.63],
+['Giants_Sconce_DTM.tif', 177.51],
+['Glenavy_02_02_2012_DSM.tif', 29.11],
+['Glenavy_02_02_2012_DTM.tif', 28.91],
+['Glynn_DSM.tif', 276.06],
+['Glynn_DTM.tif', 272.36],
+['Greyabbey_Ballywalter_DSM.tif', 568.54],
+['Greyabbey_Ballywalter_DTM.tif', 725.36],
+['Inch_Abbey_DSM.tif', 367.75],
+['Inch_Abbey_DTM.tif', 359.07],
+['Keady_02_02_2012_DSM.tif', 33.23],
+['Keady_02_02_2012_DTM.tif', 33.15],
+['Killyleagh__15_03_2010_DTM.tif', 15.48],
+['Kiltierney_DSM.tif', 610.55],
+['Kiltierney_DTM.tif', 584.72],
+['Larne_15_03_2010_DTM.tif', 16.04],
+['Limavady_23_05_2004_DSM.tif', 153.99],
+['Limavady_23_05_2004_DTM.tif', 150.18],
+['Linford_DSM.tif', 2110.78],
+['Linford_DTM.tif', 2097.42],
+['Lisbellaw_05_03_2012_DSM.tif', 27.43],
+['Lisbellaw_05_03_2012_DTM.tif', 27.32],
+['Lisburn_15_03_2010_DTM.tif', 472.90],
+['Londonderry_30_04_2009_DTM.tif', 333.08],
+['LoughNeagh_2017_DSM.tif', 914.11],
+['LoughNeagh_2017_DTM.tif', 589.80],
+['LowerBann_16_06_2014_DSM.tif', 316.55],
+['LowerBann_16_06_2014_DTM.tif', 311.30],
+['Lurgan_05_03_2012_DSM.tif', 346.96],
+['Lurgan_05_03_2012_DTM.tif', 337.92],
+['Lyles_Hill_DSM.tif', 390.82],
+['Lyles_Hill_DTM.tif', 382.18],
+['Maghera_20_04_2009_DSM.tif', 201.56],
+['Maghera_20_04_2009_DTM.tif', 191.92],
+['Magherafelt_15_03_2010_DTM.tif', 54.17],
+['Magheramore_DSM.tif', 20.10],
+['Magheramore_DTM.tif', 19.96],
+['Maguiresbridge_05_03_2012_DSM.tif', 32.69],
+['Maguiresbridge_05_03_2012_DTM.tif', 32.39],
+['Mobuoy_DSM.tif', 1110.22],
+['Mobuoy_DTM.tif', 1096.61],
+['Moneymore_05_03_2012_DSM.tif', 82.86],
+['Moneymore_05_03_2012_DTM.tif', 81.57],
+['Mossley_05_03_2012_DSM.tif', 122.67],
+['Mossley_05_03_2012_DTM.tif', 120.04],
+['Mount_Stewart_DSM.tif', 22.20],
+['Mount_Stewart_DTM.tif', 22.20],
+['Navan_DSM.tif', 1580.91],
+['Navan_DTM.tif', 1574.54],
+['Newcastle_15_03_2010_DTM.tif', 61.57],
+['Newry_15_03_2010_DTM.tif', 172.15],
+['Newtownabbey_15_03_2010_DTM.tif', 89.95],
+['Newtownards_10_06_2008_DSM.tif', 243.67],
+['Newtownards_10_06_2008_DTM.tif', 238.08],
+['Newtownstewart_23_05_2004_DSM.tif', 10.08],
+['Newtownstewart_23_05_2004_DTM.tif', 9.87],
+['Omagh_23_05_2004_DSM.tif', 45.84],
+['Omagh_23_05_2004_DTM.tif', 43.77],
+['Omagh_Town_11_12_2012_DSM.tif', 45.33],
+['Omagh_Town_11_12_2012_DTM.tif', 42.99],
+['PortadownExtension_02_02_2012_DSM.tif', 44.70],
+['PortadownExtension_02_02_2012_DTM.tif', 43.51],
+['Portadown_27_04_2009_DSM.tif', 102.58],
+['Portadown_27_04_2009_DTM.tif', 98.05],
+['Raholp_DSM.tif', 96.36],
+['Raholp_DTM.tif', 95.46],
+['Randalstown_15_03_2010_DTM.tif', 87.93],
+['Ringreagh_DSM.tif', 41.63],
+['Ringreagh_DTM.tif', 39.62],
+['Saintfield_02_02_2012_DSM.tif', 57.35],
+['Saintfield_02_02_2012_DTM.tif', 56.94],
+['Saul_DSM.tif', 225.72],
+['Saul_DTM.tif', 223.66],
+['Scrabo_DSM.tif', 189.78],
+['Scrabo_DTM.tif', 186.31],
+['Sion_Mills_02_02_2012_DSM.tif', 61.75],
+['Sion_Mills_02_02_2012_DTM.tif', 61.77],
+['Slemish_DSM.tif', 561.60],
+['Slemish_DTM.tif', 195.89],
+['Stonyford_16_06_2014_DSM.tif', 23.31],
+['Stonyford_16_06_2014_DTM.tif', 22.84],
+['Strabane_23_05_2004_DSM.tif', 37.84],
+['Strabane_23_05_2004_DTM.tif', 36.59],
+['Struell_DSM.tif', 127.38],
+['Struell_DTM.tif', 125.95],
+['Tandragee_15_03_2010_DTM.tif', 17.39],
+['The_Dorsey_DSM.tif', 520.43],
+['The_Dorsey_DTM.tif', 566.07],
+['Tirgoland_DSM.tif', 189.92],
+['Tirgoland_DTM.tif', 189.40],
+['Tullaghoge_DSM.tif', 208.18],
+['Tullaghoge_DTM.tif', 204.57]
+        ];
+
+        const zstdData = [
+['Ardquin_DSM.tif', 659.67],
+['Ardquin_DTM.tif', 602.64],
+['Ardstraw_02_02_2012_DSM.tif', 15.28],
+['Ardstraw_02_02_2012_DTM.tif', 14.48],
+['Ardtole_DSM.tif', 33.62],
+['Ardtole_DTM.tif', 30.01],
+['Armagh-Dungannon-Coalisland_15_03_2010_DTM.tif', 310.56],
+['Ballinamallard_05_03_2012_DSM.tif', 36.00],
+['Ballinamallard_05_03_2012_DTM.tif', 31.57],
+['Ballycastle_15_03_2010_DTM.tif', 14.79],
+['Ballyclare_23_04_2009_DTM.tif', 121.93],
+['Ballygalley_15_03_2010_DTM.tif', 3.57],
+['Ballygowan_15_03_2010_DTM.tif', 16.10],
+['Ballymena_23_04_2009_DSM.tif', 146.77],
+['Ballymena_23_04_2009_DTM.tif', 121.66],
+['Ballynahinch_15_03_2010_DTM.tif', 51.52],
+['Ballynavally_04_04_2007_DTM.tif', 4.01],
+['Banbridge_15_03_2010_DTM.tif', 41.22],
+['Bangor_04_04_2007_DTM.tif', 157.85],
+['Bangor_Extension_05_03_2012_DSM.tif', 82.26],
+['Bangor_Extension_05_03_2012_DTM.tif', 68.23],
+['Belfast_2006_DSM.tif', 1002.31],
+['Belfast_2006_DTM.tif', 707.16],
+['Belleek_05_03_2012_DSM.tif', 23.94],
+['Belleek_05_03_2012_DTM.tif', 21.14],
+['Beragh_02_02_2012_DSM.tif', 34.17],
+['Beragh_02_02_2012_DTM.tif', 31.70],
+['Black_Pigs_Dyke_DSM.tif', 103.97],
+['Black_Pigs_Dyke_DTM.tif', 80.67],
+['Blackwater_16_06_2014_DSM.tif', 378.45],
+['Blackwater_16_06_2014_DTM.tif', 327.13],
+['Bonamargy_DSM.tif', 13.17],
+['Bonamargy_DTM.tif', 10.54],
+['Burren_03_03_2012_DSM.tif', 11.61],
+['Burren_03_03_2012_DTM.tif', 10.10],
+['Bushmills_15_03_2010_DTM.tif', 15.06],
+['Cahery_DSM.tif', 41.79],
+['Cahery_DTM.tif', 37.72],
+['Camowen_16_06_2014_DSM.tif', 14.53],
+['Camowen_16_06_2014_DTM.tif', 13.30],
+['Carrickfergus_04_04_2007_DTM.tif', 160.40],
+['Carryduff_15_03_2010_DTM.tif', 18.61],
+['Castlederg_23_05_2004_DSM.tif', 16.20],
+['Castlederg_23_05_2004_DTM.tif', 14.89],
+['Castlereagh_04_04_2007_DTM.tif', 7.60],
+['Cave_Hill_DSM.tif', 403.86],
+['Cave_Hill_DTM.tif', 319.08],
+['Charlemont_DSM.tif', 37.29],
+['Charlemont_DTM.tif', 31.76],
+['Clady_10_03_2009_DSM.tif', 11.69],
+['Clady_10_03_2009_DTM.tif', 10.54],
+['Clandeboye_DSM.tif', 177.24],
+['Clandeboye_DTM.tif', 131.61],
+['Clogher_DSM.tif', 269.35],
+['Clogher_DTM.tif', 215.30],
+['Cloghmills_16_06_2014_DSM.tif', 26.18],
+['Cloghmills_16_06_2014_DTM.tif', 23.76],
+['Coleraine-Portstewart-Portrush_15_03_2010_DTM.tif', 215.83],
+['Cookstown_06_06_2013_DSM.tif', 64.09],
+['Cookstown_06_06_2013_DTM.tif', 53.48],
+['Cornashee_DSM.tif', 156.27],
+['Cornashee_DTM.tif', 124.26],
+['Crossmurrin_DSM.tif', 323.15],
+['Crossmurrin_DTM.tif', 260.73],
+['Cullybackey_15_03_2010_DTM.tif', 40.22],
+['Cushendall_15_03_2010_DTM.tif', 12.05],
+['Devenish_DSM.tif', 130.53],
+['Devenish_DTM.tif', 72.66],
+['Dohertys_Tower_DSM.tif', 72.19],
+['Dohertys_Tower_DTM.tif', 62.17],
+['Donegore_DSM.tif', 578.32],
+['Donegore_DTM.tif', 518.57],
+['Dougary_02_02_2012_DSM.tif', 14.14],
+['Dougary_02_02_2012_DTM.tif', 12.85],
+['Downpatrick_05_05_2009_DSM.tif', 118.86],
+['Downpatrick_05_05_2009_DTM.tif', 103.93],
+['Dundrum_DSM.tif', 63.90],
+['Dundrum_DTM.tif', 58.33],
+['Dunluce_DSM.tif', 85.03],
+['Dunluce_DTM.tif', 69.46],
+['Dunmull_DSM.tif', 53.98],
+['Dunmull_DTM.tif', 50.07],
+['Dunmurry_04_04_2007_DTM.tif', 53.14],
+['Dunseverick_DSM.tif', 188.26],
+['Dunseverick_DTM.tif', 166.92],
+['East Belfast_29_05_2013_DSM.tif', 96.43],
+['East Belfast_29_05_2013_DTM.tif', 75.22],
+['Eglinton_11_12_2012_DSM.tif', 24.73],
+['Eglinton_11_12_2012_DTM.tif', 21.77],
+['Enniskillen_05_03_2012_DSM.tif', 91.47],
+['Enniskillen_05_03_2012_DTM.tif', 80.43],
+['Fintona_02_02_2012_DSM.tif', 35.67],
+['Fintona_02_02_2012_DTM.tif', 32.33],
+['Folk Park Newtownstewart_02_02_2012_DSM.tif', 34.24],
+['Folk Park Newtownstewart_02_02_2012_DTM.tif', 31.92],
+['Foyle_23_05_2004_DSM.tif', 142.10],
+['Foyle_23_05_2004_DTM.tif', 139.73],
+['Garron_DSM.tif', 245.72],
+['Garron_DTM.tif', 208.86],
+['Giants_Sconce_DSM.tif', 112.78],
+['Giants_Sconce_DTM.tif', 81.81],
+['Glenavy_02_02_2012_DSM.tif', 17.06],
+['Glenavy_02_02_2012_DTM.tif', 15.11],
+['Glynn_DSM.tif', 179.40],
+['Glynn_DTM.tif', 143.24],
+['Greyabbey_Ballywalter_DSM.tif', 447.11],
+['Greyabbey_Ballywalter_DTM.tif', 392.14],
+['Inch_Abbey_DSM.tif', 250.78],
+['Inch_Abbey_DTM.tif', 221.12],
+['Keady_02_02_2012_DSM.tif', 18.13],
+['Keady_02_02_2012_DTM.tif', 16.38],
+['Killyleagh__15_03_2010_DTM.tif', 9.62],
+['Kiltierney_DSM.tif', 360.29],
+['Kiltierney_DTM.tif', 289.28],
+['Larne_15_03_2010_DTM.tif', 10.17],
+['Limavady_23_05_2004_DSM.tif', 99.82],
+['Limavady_23_05_2004_DTM.tif', 92.92],
+['Linford_DSM.tif', 994.32],
+['Linford_DTM.tif', 848.43],
+['Lisbellaw_05_03_2012_DSM.tif', 15.41],
+['Lisbellaw_05_03_2012_DTM.tif', 13.99],
+['Lisburn_15_03_2010_DTM.tif', 263.86],
+['Londonderry_30_04_2009_DTM.tif', 183.44],
+['LoughNeagh_2017_DSM.tif', 652.15],
+['LoughNeagh_2017_DTM.tif', 339.66],
+['LowerBann_16_06_2014_DSM.tif', 210.87],
+['LowerBann_16_06_2014_DTM.tif', 182.61],
+['Lurgan_05_03_2012_DSM.tif', 222.99],
+['Lurgan_05_03_2012_DTM.tif', 194.99],
+['Lyles_Hill_DSM.tif', 219.60],
+['Lyles_Hill_DTM.tif', 196.04],
+['Maghera_20_04_2009_DSM.tif', 130.40],
+['Maghera_20_04_2009_DTM.tif', 111.17],
+['Magherafelt_15_03_2010_DTM.tif', 30.10],
+['Magheramore_DSM.tif', 10.79],
+['Magheramore_DTM.tif', 9.64],
+['Maguiresbridge_05_03_2012_DSM.tif', 19.21],
+['Maguiresbridge_05_03_2012_DTM.tif', 17.40],
+['Mobuoy_DSM.tif', 641.35],
+['Mobuoy_DTM.tif', 568.88],
+['Moneymore_05_03_2012_DSM.tif', 46.32],
+['Moneymore_05_03_2012_DTM.tif', 42.22],
+['Mossley_05_03_2012_DSM.tif', 77.09],
+['Mossley_05_03_2012_DTM.tif', 65.41],
+['Mount_Stewart_DSM.tif', 12.32],
+['Mount_Stewart_DTM.tif', 12.32],
+['Navan_DSM.tif', 908.47],
+['Navan_DTM.tif', 814.57],
+['Newcastle_15_03_2010_DTM.tif', 34.51],
+['Newry_15_03_2010_DTM.tif', 105.19],
+['Newtownabbey_15_03_2010_DTM.tif', 49.94],
+['Newtownards_10_06_2008_DSM.tif', 152.70],
+['Newtownards_10_06_2008_DTM.tif', 131.24],
+['Newtownstewart_23_05_2004_DSM.tif', 6.15],
+['Newtownstewart_23_05_2004_DTM.tif', 5.61],
+['Omagh_23_05_2004_DSM.tif', 28.83],
+['Omagh_23_05_2004_DTM.tif', 25.13],
+['Omagh_Town_11_12_2012_DSM.tif', 29.93],
+['Omagh_Town_11_12_2012_DTM.tif', 23.92],
+['PortadownExtension_02_02_2012_DSM.tif', 27.36],
+['PortadownExtension_02_02_2012_DTM.tif', 23.45],
+['Portadown_27_04_2009_DSM.tif', 66.69],
+['Portadown_27_04_2009_DTM.tif', 56.79],
+['Raholp_DSM.tif', 55.12],
+['Raholp_DTM.tif', 49.01],
+['Randalstown_15_03_2010_DTM.tif', 51.93],
+['Ringreagh_DSM.tif', 31.23],
+['Ringreagh_DTM.tif', 25.09],
+['Saintfield_02_02_2012_DSM.tif', 33.88],
+['Saintfield_02_02_2012_DTM.tif', 30.18],
+['Saul_DSM.tif', 138.64],
+['Saul_DTM.tif', 120.19],
+['Scrabo_DSM.tif', 117.11],
+['Scrabo_DTM.tif', 99.32],
+['Sion_Mills_02_02_2012_DSM.tif', 33.97],
+['Sion_Mills_02_02_2012_DTM.tif', 31.18],
+['Slemish_DSM.tif', 299.23],
+['Slemish_DTM.tif', 90.10],
+['Stonyford_16_06_2014_DSM.tif', 13.96],
+['Stonyford_16_06_2014_DTM.tif', 11.93],
+['Strabane_23_05_2004_DSM.tif', 25.25],
+['Strabane_23_05_2004_DTM.tif', 23.41],
+['Struell_DSM.tif', 74.61],
+['Struell_DTM.tif', 65.25],
+['Tandragee_15_03_2010_DTM.tif', 10.19],
+['The_Dorsey_DSM.tif', 318.87],
+['The_Dorsey_DTM.tif', 266.09],
+['Tirgoland_DSM.tif', 99.43],
+['Tirgoland_DTM.tif', 87.34],
+['Tullaghoge_DSM.tif', 119.21],
+['Tullaghoge_DTM.tif', 100.84]
+        ];
+
+        // Create file comparison data
+        const fileComparisons = [];
+        deflateData.forEach((deflateItem, index) => {
+            const filename = deflateItem[0];
+            const deflateSize = deflateItem[1];
+            const lzwSize = lzwData[index][1];
+            const zstdSize = zstdData[index][1];
+            
+            fileComparisons.push({
+                filename,
+                deflate: deflateSize,
+                lzw: lzwSize,
+                zstd: zstdSize,
+                savingsZstdVsLzw: ((lzwSize - zstdSize) / lzwSize * 100),
+                savingsZstdVsDeflate: ((deflateSize - zstdSize) / deflateSize * 100)
+            });
+        });
+
+        // Distribution Chart
+        const distributionCtx = document.getElementById('distributionChart').getContext('2d');
+        new Chart(distributionCtx, {
+            type: 'bar',
+            data: {
+                labels: fileComparisons.slice(0, 25).map(f => f.filename.split('_')[0]),
+                datasets: [{
+                     label: 'LZW',
+                    data: fileComparisons.slice(0, 25).map(f => f.lzw),
+                                        backgroundColor: 'rgba(231, 76, 60, 0.7)',
+                    borderColor: 'rgba(231, 76, 60, 1)',
+
+                    borderWidth: 2
+                }, {
+                    
+                    label: 'DEFLATE',
+                    data: fileComparisons.slice(0, 25).map(f => f.deflate),
+                    backgroundColor: 'rgba(243, 156, 18, 0.7)',
+                    borderColor: 'rgba(243, 156, 18, 1)',
+                    borderWidth: 2
+                   
+                }, {
+                    label: 'ZSTD',
+                    data: fileComparisons.slice(0, 25).map(f => f.zstd),
+                    backgroundColor: 'rgba(39, 174, 96, 0.7)',
+                    borderColor: 'rgba(39, 174, 96, 1)',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'File Size (MB)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Files (Sample of 25)'
+                        }
+                    }
+                }
+            }
+        });
+
+        
+
+        // Generate examples
+        function generateExamples() {
+            // Largest savings
+            const largestSavings = fileComparisons
+                .sort((a, b) => (b.lzw - b.zstd) - (a.lzw - a.zstd))
+                .slice(0, 190);
+            
+            const largestSavingsHtml = largestSavings.map(f => `
+                <div class="example-item">
+                    <div class="filename">${f.filename}</div>
+                    <div class="compression-info">
+                        <div class="size lzw" style="background-color: #f39c12;">${f.lzw.toFixed(1)} MB</div>
+                        <div class="size zstd" style="background-color: #27ae60;">${f.zstd.toFixed(1)} MB</div>
+                        <div class="savings">-${(f.lzw - f.zstd).toFixed(1)} MB (${((f.lzw - f.zstd) / f.lzw * 100).toFixed(1)}%)</div>
+                    </div>
+                </div>
+            `).join('');
+            
+ 
+            
+            // Most efficient
+            const mostEfficient = [...fileComparisons]
+                .sort((a, b) => b.savingsZstdVsLzw - a.savingsZstdVsLzw)
+                .slice(0, 190);
+            
+            const mostEfficientHtml = mostEfficient.map(f => `
+                <div class="example-item">
+                    <div class="filename">${f.filename}</div>
+                    <div class="compression-info">
+                        <div class="size lzw" style="background-color: #f39c12;">${f.lzw.toFixed(1)} MB</div>
+                        <div class="size zstd" style="background-color: #27ae60;">${f.zstd.toFixed(1)} MB</div>
+                        <div class="savings">${f.savingsZstdVsLzw.toFixed(1)}% reduction</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('largestSavings').innerHTML = largestSavingsHtml;
+            document.getElementById('mostEfficient').innerHTML = mostEfficientHtml;
+        }
+        
+        generateExamples();
+    </script>
+</body>
+</html>

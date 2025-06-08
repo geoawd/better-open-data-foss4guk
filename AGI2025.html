@@ -206,6 +206,51 @@
 						</p>
 					</section>
 				</section>
+								<!-- Bands-->
+				<section>
+					<section>
+						<h2>Bands</h2>
+						<p>While today's demo is focussed on LiDAR data COGs support multiple bands.</p>
+						<p>There's plenty of optical data from Planet so I'm not going to go into detail on that.</p>
+						</section>
+				</section>
+
+
+
+
+				<!-- Compression / storage space-->
+				<section>
+					<section>
+						<h2>COG Compression</h2>
+						<p>Lossy and lossless compression options available</p>
+						<p>TLDR: compression, in the case of these LiDAR data, can make the data 1/3 of the size with no loss of resolution.</p>
+						<small>View the speaker notes for details of methods and their suitability.</small>
+
+
+						<aside class="notes">
+							<p>Which compression should I use...</p>
+							<ul>
+							<li>DEFLATE: Lossless compression that reduces file size while preserving data integrity.</li>
+							<li>LZW: Another lossless option, effective for compressing raster data with repeating values.</li>
+							<li>ZSTD: A newer, efficient lossless compression with better speed and ratio than DEFLATE.</li>
+							<li>JPEG: Lossy compression suitable for RGB imagery, significantly reducing file size but not ideal for analytical data.</li>
+							<li>WEBP: WebP is a modern image format developed by Google that offers both lossy and lossless compression, designed for faster loading and smaller file sizes on the web compared to older formats like JPEG and PNG</li>
+							</ul>
+							<p>DEFLATE, LZW or ZSTD are a good option for data where the pixel values matter.</p>
+							<p>WEBP is good for aerial imagery where small compression artifacts aren't too important.</p>
+						</aside>
+						
+					</section>
+
+					<section>
+						<img src="dsm_file_sizes.png" style="width: 90%; height: auto;">
+					</section>
+					
+					<section data-background-iframe="compression_analysis.html" data-background-interactive data-background-color="#FFFFFF">
+					</section>
+					</section>
+
+
 
 				<!-- How do I make a COG 101-->
 				<section>
@@ -259,47 +304,6 @@ for f in os.listdir(input_dir):
 					</code></pre>
 					</section>
 				</section>
-
-				<!-- Bands-->
-				<section>
-					<section>
-						<h2>Bands</h2>
-						<p>While today's demo is focussed on LiDAR data COGs support multiple bands.</p>
-						<p>There's plenty of optical data from Planet so I'm not going to go into detail on that.</p>
-						</section>
-				</section>
-
-
-				<!-- Compression / storage space-->
-				<section>
-					<section>
-						<h2>COG Compression</h2>
-						<p>Lossy and lossless compression options available</p>
-						<p>TLDR: compression, in the case of these LiDAR data, can make the data 1/3 of the size with no loss of resolution.</p>
-						<small>View the speaker notes for details of methods and their suitability.</small>
-
-
-						<aside class="notes">
-							<p>Which compression should I use...</p>
-							<ul>
-							<li>DEFLATE: Lossless compression that reduces file size while preserving data integrity.</li>
-							<li>LZW: Another lossless option, effective for compressing raster data with repeating values.</li>
-							<li>ZSTD: A newer, efficient lossless compression with better speed and ratio than DEFLATE.</li>
-							<li>JPEG: Lossy compression suitable for RGB imagery, significantly reducing file size but not ideal for analytical data.</li>
-							<li>WEBP: WebP is a modern image format developed by Google that offers both lossy and lossless compression, designed for faster loading and smaller file sizes on the web compared to older formats like JPEG and PNG</li>
-							</ul>
-							<p>DEFLATE, LZW or ZSTD are a good option for data where the pixel values matter.</p>
-							<p>WEBP is good for aerial imagery where small compression artifacts aren't too important.</p>
-						</aside>
-						
-					</section>
-
-					<section data-background="dsm_file_sizes.png">
-
-					</section>
-					</section>
-
-
 
 				<!-- Better Open Data - an introduction-->
 				<section>
