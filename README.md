@@ -1,4 +1,5 @@
 # Improving Interoperability with Cloud-native Geospatial Formats
-Presentation on *Improving Interoperability with Cloud-native Geospatial Formats* (Better Open Data) from the <a href="https://www.agi.org.uk/agi-northern-ireland-conference-2025/">AGI NI 2025 Conference</a> held in Belfast on 12th June.
+Presentation on *Better Open Data - Cloud-native Geospatial Data for Northern Ireland
+* from the <a href="https://uk.osgeo.org/foss4guk2025/">FOSS4GUK Conference</a> held in Leeds, UK on 1st and 2nd October 2025.
 
-## View the presentation on <a href="https://geoawd.github.io/better-open-data-agini25/AGI2025.html">github pages</a>.
+## View the presentation on <a href="https://geoawd.github.io/better-open-data-foss4guk/FOSS4GUK2025.html">github pages</a>.

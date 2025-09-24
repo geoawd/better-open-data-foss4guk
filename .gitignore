@@ -1,0 +1,8 @@
+.DS_Store
+.vscode/
+*.mov
+*.mp4
+*.mkv
+node_modules/
+venv/
+__pycache__/

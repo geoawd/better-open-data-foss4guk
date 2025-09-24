@@ -4,7 +4,8 @@
 	<head>
 		<meta charset="utf-8">
 
-		<title>Improving Interoperability with Cloud-native Geospatial Formats</title>
+		<title>Better Open Data - Cloud-native Geospatial Data for Northern Ireland
+</title>
 
 		<meta name="description" content="Improving Interoperability with Cloud-native Geospatial Formats">
 		<meta name="author" content="Alex Donald (Geological Survey of Northern Ireland)">
@@ -29,10 +30,13 @@
 			<!-- Title and Introduction-->
 			<div class="slides">
 				<section>
-					<h3>Improving Interoperability with Cloud-native Geospatial Formats</h3>
+					<h3>Better Open Data <br/>Cloud-native Geospatial Data for Northern Ireland
+</h3>
 					<p>
 						<small>Alex Donald (Geological Survey of Northern Ireland)</small>
 					</p>
+
+					<h4>Visit <a href="https://geoawd.github.io/better-open-data-foss4guk/FOSS4GUK2025.html">https://geoawd.github.io/better-open-data-foss4guk/FOSS4GUK2025.html</a> to access the slides with videos</h4>
 
 					
 		
@@ -201,7 +205,10 @@
 					<section>
 						<img src="dsm_file_sizes.png" style="width: 90%; height: auto;">
 					</section>
-					
+
+					<section data-background-iframe="compression_summary.html" data-background-interactive data-background-color="#FFFFFF">
+					</section>
+
 					<section data-background-iframe="compression_analysis.html" data-background-interactive data-background-color="#FFFFFF">
 					</section>
 					</section>
@@ -219,7 +226,7 @@ input = r'input.vrt'
 output = r'output_file.tif'
 
 translate_options = gdal.TranslateOptions(format='COG',
-		creationOptions=["COMPRESS=DEFLATE",
+		creationOptions=["COMPRESS=ZSTD",
 						"BIGTIFF=YES", 
 						"PREDICTOR=2",	
 						"IGNORE_OVERVIEWS=YES", 
@@ -234,8 +241,8 @@ gdal.Translate(output, input, options=translate_options)
 import os
 from osgeo import gdal
 
-input_dir = r'lidar/'
-output_dir = r'newlidar/'
+input_dir = r'lidar-source/'
+output_dir = r'lidar-cog/'
 
 for f in os.listdir(input_dir):
     if f.endswith('.tif'):
@@ -291,7 +298,7 @@ for f in os.listdir(input_dir):
 						<br />
 						<br />
 
-						<small>If you aren't at the AGI conference, there are a series of videos on the following pages that you can view.</small>
+						<small>If you aren't at the FOSS4GUK 2025 conference, there are a series of videos on the following pages that you can view.</small>
 					</section>
 				</section>
 				
